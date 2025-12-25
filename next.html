@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loveylove</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+body, html {
+    height: 100%;
+    margin: 0;
+    font-family: 'Press Start 2P', cursive;
+    background: #ffdde1 url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F2c%2F08%2F20%2F2c0820784d838c0394311d7bccb4e1c6.jpg&f=1&nofb=1&ipt=e2e2a71d219542f08059d69aa8fb8606e9c48c959963b1f148a8821e867ee14b') no-repeat center center fixed;
+    background-size: cover;
+    overflow: hidden;
+    text-align: center;
+}
+
+canvas { display: none; border: 5px solid #fba2b7; border-radius: 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+.stage-box {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: rgba(255,221,225,0.9);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+}
+
+.stage-box button { margin:10px; padding:10px 20px; background:#ff6f91; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+.stage-box button:hover { background:#ff4d6d; }
+
+/* Word search container layout */
+#wordsearch-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+#grid {
+    display: grid;
+    grid-template-columns: repeat(10, 40px);
+    grid-template-rows: repeat(10, 40px);
+    gap: 2px;
+}
+
+#grid div {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    border:1px solid #ff6f91;
+    cursor:pointer;
+    font-weight:bold;
+    user-select:none;
+}
+
+#grid .selected { background: yellow; }
+#grid .highlight { background: lightgreen; }
+
+#word-list {
+    list-style: none;
+    padding-left: 0;
+    text-align: left;
+}
+
+#word-list li.found {
+    text-decoration: line-through;
+    color: green;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div id="start-screen" class="stage-box">
+    <p>Hiya jaanuuuuu let's play some lil games<3 </p>
+    <button onclick="nextStage()">Start!</button>
+</div>
+
+<!-- Maze Canvas -->
+<canvas id="canvas" width="520" height="400"></canvas>
+
+<!-- Stage Boxes -->
+<div id="message-maze-done" class="stage-box">
+    <p> WOWOWWWW U DID IT YAYAYAYA </p>
+    <button onclick="nextStage()">Next</button>
+</div>
+
+<div id="message-wordsearch-intro" class="stage-box">
+    <p> Let's do a lil word search now! hehehehe </p>
+    <button onclick="nextStage()">Start</button>
+</div>
+
+<div id="wordsearch" class="stage-box">
+    <div id="wordsearch-container">
+        <div id="grid"></div>
+        <ul id="word-list"></ul>
+    </div>
+</div>
+
+<div id="message2" class="stage-box">
+    <p> YOU DID IT YAYYYY! NOW IT IS RIDDLE TIME </p>
+    <button onclick="nextStage()">Next</button>
+</div>
+
+<div id="riddle" class="stage-box">
+    <p>What is the thing we share every day that keeps us connected?</p>
+    <button onclick="checkRiddle('love')">Love ❤️</button>
+    <button onclick="checkRiddle('money')">Money 💰</button>
+    <button onclick="checkRiddle('hugs')">Hugs 🤗</button>
+</div>
+
+<div id="end" class="stage-box">
+    <p> YAYAYAYAYA YOU DID IT, NOW CLICK BELOW TO GO TO NEXT PAGE </p>
+    <button onclick="window.location.href='nextpage.html'">Go to next page ➡️</button>
+</div>
+
+<script>
+// Stage flow
+let stageIndex=0;
+const stages=["start-screen","maze","message-maze-done","message-wordsearch-intro","wordsearch","message2","riddle","end"];
+function showStage(id){
+    document.querySelectorAll(".stage-box, #canvas").forEach(el=>el.style.display="none");
+    if(id==="maze"){ canvas.style.display="block"; startGame(); }
+    else document.getElementById(id).style.display="flex";
+}
+function nextStage(){ stageIndex++; if(stageIndex>=stages.length) stageIndex=stages.length-1; showStage(stages[stageIndex]); }
+
+// Maze
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const rows=10, cols=13, tileSize=40;
+const wallImage=new Image(); wallImage.src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.Gkj8Hg0UKny0K1fNm5VXRwHaHa%3Fpid%3DApi&f=1&ipt=c78cb685abfe42e35fca4727c3ee57a155c0e33baac9b8d24becbf52d2ca651a&ipo=images";
+const walkwayImage=new Image(); walkwayImage.src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.tynker.com%2Fminecraft%2Fapi%2Fblock%3Fid%3D58d073d85ae0290f4b8b456f%26w%3D400%26h%3D400%26width%3D400%26height%3D400%26mode%3Dcontain%26format%3Djpg%26quality%3D75%26cache%3Dmax%26v%3D1490056152&f=1&nofb=1&ipt=87b8e0cc18f5c6e6f7674a84218490fdf4859119ad4ee3b869f013380e4a2ca8";
+const playerImage=new Image(); playerImage.src="https://i.pinimg.com/564x/a9/a4/ec/a9a4ec03fa9afc407028ca40c20ed774.jpg";
+const whiteHeartImage=new Image(); whiteHeartImage.src="https://media.tenor.com/wnVuzMq9fYsAAAAi/love-heart.gif";
+const blackHeartImage=new Image(); blackHeartImage.src="https://media.tenor.com/qVJBrbsBk8EAAAAi/pixel-art-gmail.gif";
+
+const maze = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,1,0,0,0,0,0,0,0,1],
+[1,0,1,0,1,0,1,1,1,1,1,0,1],
+[1,0,1,0,0,0,1,0,0,0,1,0,1],
+[1,0,1,1,1,0,1,0,1,0,1,0,1],
+[1,0,0,0,1,0,0,0,1,0,0,0,1],
+[1,1,1,0,1,1,1,0,1,1,1,0,1],
+[1,0,0,0,0,0,1,0,0,0,0,0,1],
+[1,0,1,1,1,0,0,0,1,1,1,0,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+const player={x:1,y:1};
+const whiteHeartPos={x:11,y:8};
+const blackHeartPos={x:1,y:8};
+let gameStarted=false;
+
+function drawMaze(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let y=0;y<rows;y++){for(let x=0;x<cols;x++){
+        ctx.drawImage(maze[y][x]===1?wallImage:walkwayImage,x*tileSize,y*tileSize,tileSize,tileSize);
+    }}
+    ctx.drawImage(whiteHeartImage, whiteHeartPos.x*tileSize, whiteHeartPos.y*tileSize, tileSize, tileSize);
+    ctx.drawImage(blackHeartImage, blackHeartPos.x*tileSize, blackHeartPos.y*tileSize, tileSize, tileSize);
+    ctx.drawImage(playerImage, player.x*tileSize, player.y*tileSize, tileSize, tileSize);
+}
+
+function movePlayer(dx,dy){
+    if(!gameStarted) return;
+    const newX=player.x+dx,newY=player.y+dy;
+    if(newX>=0 && newX<cols && newY>=0 && newY<rows && maze[newY][newX]===0){
+        player.x=newX; player.y=newY; drawMaze();
+        if(player.x===whiteHeartPos.x && player.y===whiteHeartPos.y) nextStage();
+        if(player.x===blackHeartPos.x && player.y===blackHeartPos.y){ alert("Game Over!"); startGame(); }
+    }
+}
+
+function startGame(){ player.x=1; player.y=1; gameStarted=true; drawMaze(); }
+window.addEventListener("keydown",e=>{switch(e.key){
+    case"ArrowUp":movePlayer(0,-1);break;
+    case"ArrowDown":movePlayer(0,1);break;
+    case"ArrowLeft":movePlayer(-1,0);break;
+    case"ArrowRight":movePlayer(1,0);break;
+}});
+
+wallImage.onload=drawMaze; walkwayImage.onload=drawMaze; playerImage.onload=drawMaze;
+whiteHeartImage.onload=drawMaze; blackHeartImage.onload=drawMaze;
+
+// Riddle
+function checkRiddle(answer){if(answer==="love") nextStage(); else alert("Oh no :( try again<3");}
+
+/* Word Search */
+const words=["LOVE","CUDDLES","KISSIES","HUGGIES","WIFEY","HUBBY","SWEETU","JAAN","SWEETHEART","SHAADI"];
+const gridSize=10;
+const grid=document.getElementById("grid");
+const wordList=document.getElementById("word-list");
+let selectedCells=[]; let foundWords=new Set(); let gridData=[];
+
+function createGrid(){
+    grid.innerHTML='';
+    gridData=Array(gridSize).fill().map(()=>Array(gridSize).fill(''));
+    for(let i=0;i<gridSize*gridSize;i++){
+        const cell=document.createElement("div");
+        const row=Math.floor(i/gridSize),col=i%gridSize;
+        cell.dataset.row=row; cell.dataset.col=col;
+        cell.addEventListener("mousedown",()=>startSelection(cell));
+        cell.addEventListener("mouseenter",()=>addToSelection(cell));
+        cell.addEventListener("mouseup",()=>endSelection());
+        grid.appendChild(cell);
+    }
+}
+
+function placeWords(){
+    words.forEach(word=>{
+        let placed=false;
+        while(!placed){
+            const direction=Math.floor(Math.random()*2), startRow=Math.floor(Math.random()*gridSize), startCol=Math.floor(Math.random()*gridSize);
+            if(canPlaceWord(word,startRow,startCol,direction)){
+                for(let i=0;i<word.length;i++){
+                    let r=startRow+(direction===1?i:0),c=startCol+(direction===0?i:0);
+                    grid.children[r*gridSize+c].textContent=word[i]; gridData[r][c]=word[i];
+                }
+                placed=true;
+            }
+        }
+    });
+}
+
+function canPlaceWord(word,row,col,direction){
+    if(direction===0){ if(col+word.length>gridSize) return false; for(let i=0;i<word.length;i++) if(gridData[row][col+i]!=='') return false; }
+    else{ if(row+word.length>gridSize) return false; for(let i=0;i<word.length;i++) if(gridData[row+i][col]!=='') return false; }
+    return true;
+}
+
+function fillEmpty(){for(let i=0;i<gridSize*gridSize;i++){if(!grid.children[i].textContent) grid.children[i].textContent=String.fromCharCode(65+Math.floor(Math.random()*26));}}
+
+function startSelection(cell){selectedCells=[cell]; cell.classList.add("selected");}
+function addToSelection(cell){if(selectedCells.length>0&&!selectedCells.includes(cell)){selectedCells.push(cell);cell.classList.add("selected");}}
+function endSelection(){const word=selectedCells.map(c=>c.textContent).join(""); checkWord(word); selectedCells.forEach(c=>c.classList.remove("selected")); selectedCells=[];}
+
+function checkWord(sel){
+    words.forEach(word=>{
+        if(sel===word||sel===word.split("").reverse().join("")){
+            if(!foundWords.has(word)){
+                foundWords.add(word);
+                highlightWord(selectedCells);
+                updateWordList(word);
+                if(foundWords.size===words.length) nextStage();
+            }
+        }
+    });
+}
+
+function highlightWord(cells){cells.forEach(c=>c.classList.add("highlight"));}
+function updateWordList(word){
+    const items=Array.from(wordList.children[0].children);
+    items.forEach(li=>{if(li.textContent===word){li.classList.add("found");}});
+}
+
+// Initialize word list and grid
+document.addEventListener("DOMContentLoaded",()=>{
+    const ul=document.createElement("ul");
+    words.forEach(w=>{const li=document.createElement("li");li.textContent=w;ul.appendChild(li);});
+    wordList.appendChild(ul);
+    createGrid(); placeWords(); fillEmpty();
+});
+
+// Start first stage
+showStage(stages[stageIndex]);
+</script>
+</body>
+</html>

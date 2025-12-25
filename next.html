@@ -113,15 +113,21 @@ canvas { display: none; border: 5px solid #fba2b7; border-radius: 10px; position
 </div>
 
 <div id="riddle" class="stage-box">
-    <p>What is the thing we share every day that keeps us connected?</p>
-    <button onclick="checkRiddle('love')">Love ❤️</button>
-    <button onclick="checkRiddle('money')">Money 💰</button>
-    <button onclick="checkRiddle('hugs')">Hugs 🤗</button>
+    <p> What has one eye, but cannot see </p>
+    <button onclick="checkRiddle('A needle')"> A needle </button>
+    <button onclick="checkRiddle('Storm')"> A storm </button>
+    <button onclick="checkRiddle('Potato')"> A potato </button>
+</div>
+
+<!-- Try Again Window -->
+<div id="try-again" class="stage-box">
+    <p>Oh no :( Try again<3 </p>
+    <button onclick="closeTryAgain()">OK</button>
 </div>
 
 <div id="end" class="stage-box">
     <p> YAYAYAYAYA YOU DID IT, NOW CLICK BELOW TO GO TO NEXT PAGE </p>
-    <button onclick="window.location.href='nextpage.html'">Go to next page ➡️</button>
+    <button onclick="window.location.href='nextpage.html'">Go to next page</button>
 </div>
 
 <script>
@@ -140,8 +146,8 @@ const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
 const rows=10, cols=13, tileSize=40;
 const wallImage=new Image(); wallImage.src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse4.mm.bing.net%2Fth%2Fid%2FOIP.Gkj8Hg0UKny0K1fNm5VXRwHaHa%3Fpid%3DApi&f=1&ipt=c78cb685abfe42e35fca4727c3ee57a155c0e33baac9b8d24becbf52d2ca651a&ipo=images";
-const walkwayImage=new Image(); walkwayImage.src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fwww.tynker.com%2Fminecraft%2Fapi%2Fblock%3Fid%3D58d073d85ae0290f4b8b456f%26w%3D400%26h%3D400%26width%3D400%26height%3D400%26mode%3Dcontain%26format%3Djpg%26quality%3D75%26cache%3Dmax%26v%3D1490056152&f=1&nofb=1&ipt=87b8e0cc18f5c6e6f7674a84218490fdf4859119ad4ee3b869f013380e4a2ca8";
-const playerImage=new Image(); playerImage.src="https://githubusercontent.com/aqk07/next/main/images/hellokitty.png";
+const walkwayImage=new Image(); walkwayImage.src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fmedia.forgecdn.net%2Fattachments%2F810%2F589%2Fcherry_planks_after.png&f=1&nofb=1&ipt=59a85ae3d1a9bc21bb5fe3a0066f32db8495fcee1cc00e414570bdef30dd9e97";
+const playerImage=new Image(); playerImage.src="https://github.com/AQK07/neequ/blob/main/hellokitty.png?raw=true";
 const whiteHeartImage=new Image(); whiteHeartImage.src="https://media.tenor.com/wnVuzMq9fYsAAAAi/love-heart.gif";
 const blackHeartImage=new Image(); blackHeartImage.src="https://media.tenor.com/qVJBrbsBk8EAAAAi/pixel-art-gmail.gif";
 
@@ -195,7 +201,20 @@ wallImage.onload=drawMaze; walkwayImage.onload=drawMaze; playerImage.onload=draw
 whiteHeartImage.onload=drawMaze; blackHeartImage.onload=drawMaze;
 
 // Riddle
-function checkRiddle(answer){if(answer==="love") nextStage(); else alert("Oh no :( try again<3");}
+function checkRiddle(answer){
+    if(answer==="A needle") nextStage(); 
+    else showTryAgain();
+}
+
+function showTryAgain(){
+    document.querySelectorAll(".stage-box, #canvas").forEach(el=>el.style.display="none");
+    document.getElementById("try-again").style.display="flex";
+}
+
+function closeTryAgain(){
+    document.getElementById("riddle").style.display="flex";
+    document.getElementById("try-again").style.display="none";
+}
 
 /* Word Search */
 const words=["LOVE","CUDDLES","KISSIES","HUGGIES","WIFEY","HUBBY","SWEETU","JAAN","SWEETHEART","SHAADI"];
